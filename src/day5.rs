@@ -2,10 +2,12 @@
 
 use std::fs::read_to_string;
 use regex::Regex;
+use std::ops::Range;
 
 pub fn run() {
     let day5 = Day5::new();
-    day5.part_1();
+    //day5.part_1();
+    day5.part_2();
 }
 
 pub struct Day5 {
@@ -18,11 +20,8 @@ impl Day5 {
     }
 
     pub fn part_1(self) {
-        let mut seed_list: Vec<u64> = Vec::new();
-
         let data = read_to_string("./inputs/day5.txt").unwrap();
-        seed_list = Day5::_parse_seed_list(&data);
-
+        let mut seed_list = Day5::_parse_seed_list(&data);
 
         let seed_to_soil_data = Day5::_parse_seed_to_soil_map(&data);
         let soil_to_fert_data = Day5::_parse_soil_to_fertilizer_map(&data);
@@ -50,6 +49,49 @@ impl Day5 {
         let min_location = locations.iter().min().unwrap();
         println!("Minimum location: {}", min_location);
         
+    }
+
+    pub fn part_2(self) {
+        let data = read_to_string("./inputs/day5.txt").unwrap();
+        let mut seed_list = Day5::_parse_seed_list(&data);
+        let chunks: Vec<&[u64]> = seed_list.chunks(2).collect();
+
+        let mut full_seed_list: Vec<u64> = Vec::new();
+        for c in chunks {
+            let start = c[0];
+            let end = start + c[1];
+            let mut v = Vec::from_iter(start..end);
+
+            full_seed_list.append(&mut v);
+        }
+
+        full_seed_list.sort();
+
+        let seed_to_soil_data = Day5::_parse_seed_to_soil_map(&data);
+        let soil_to_fert_data = Day5::_parse_soil_to_fertilizer_map(&data);
+        let fert_to_water_data = Day5::_parse_fertilizer_to_water_map(&data);
+        let water_to_light_data = Day5::_parse_water_to_light_map(&data);
+        let light_to_temperature_data = Day5::_parse_light_to_temperature_map(&data);
+        let temperature_to_humidity_data = Day5::_parse_temperature_to_humidity_map(&data);
+        let humidity_to_location_data = Day5::_parse_humidity_to_location_map(&data);
+
+        let mut locations: Vec<u64> = Vec::new();
+        for seed in full_seed_list {
+
+            let soil = Day5::_convert(&seed_to_soil_data, seed);
+            let fert = Day5::_convert(&soil_to_fert_data, soil);
+            let water = Day5::_convert(&fert_to_water_data, fert);
+            let light = Day5::_convert(&water_to_light_data, water);
+            let temp = Day5::_convert(&light_to_temperature_data, light);
+            let humidity = Day5::_convert(&temperature_to_humidity_data, temp);
+            let location = Day5::_convert(&humidity_to_location_data, humidity);
+
+            locations.push(location);
+
+        }
+
+        let min_location = locations.iter().min().unwrap();
+        println!("Minimum location: {}", min_location);
     }
 
     fn _parse_seed_list(input: &String) -> Vec<u64> {
